@@ -6,123 +6,108 @@
     <title>VIAC Mutant Cave</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; outline: none; }
+        /* --- GENEL GÖRÜNÜM --- */
+        * { -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
         body { background-color: #0b021a; color: #ffb300; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .cave-container { text-align: center; border: 2px solid #5e00ff; padding: 30px; border-radius: 50px; box-shadow: 0 0 20px #5e00ff, inset 0 0 10px #5e00ff; background: rgba(20, 0, 50, 0.8); width: 85%; max-width: 400px; }
-        .progress-container { width: 100%; background: #2a0a4d; border-radius: 10px; margin: 15px 0; border: 1px solid #5e00ff; height: 12px; position: relative; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #ffb300, #ffdf00); transition: width 0.2s; box-shadow: 0 0 10px #ffb300; }
-        
-        .crystal-egg { 
-            width: 150px; height: 200px; 
-            background: radial-gradient(circle at 30% 30%, #ffdf00, #ffb300, #966b00); 
-            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; 
-            margin: 20px auto; 
-            box-shadow: 0 0 30px #ffb300; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            position: relative;
-            overflow: hidden;
-        }
+        .cave-container { text-align: center; border: 2px solid #5e00ff; padding: 30px; border-radius: 50px; box-shadow: 0 0 20px #5e00ff; background: rgba(20, 0, 50, 0.8); width: 85%; max-width: 400px; }
 
-        /* İNCE VE ESTETİK ÇATLAK KATMANLARI */
-        .crack-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-            pointer-events: none;
-            /* Hafif bir derinlik ama asla kaba değil */
-            filter: drop-shadow(0px 1px 0px rgba(255,255,255,0.1)); 
-        }
+        /* --- YUMURTA (LEVEL 1-4) --- */
+        .yumurta { width: 150px; height: 200px; background: radial-gradient(circle at 30% 30%, #ffdf00, #ffb300, #966b00); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; margin: 20px auto; position: relative; overflow: hidden; cursor: pointer; }
+        .catlak { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s; pointer-events: none; }
 
-        /* Tüm path'lerde stroke-width="0.6" veya "0.8" kullanarak inceliği koruduk */
-        
-        /* Level 2: Üst kısımlarda ilk ince kırılmalar */
-        #crack_2 { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30 20 L35 25 L32 35 M70 15 L65 25 L75 35 M50 5 L55 12 L48 20" stroke="black" stroke-width="0.7" fill="none" stroke-linejoin="round" /></svg>'); }
-        
-        /* Level 3: Yanlara ve ortaya yayılan yeni ince hatlar */
-        #crack_3 { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10 50 L25 55 L20 65 M85 45 L70 50 L80 65 M40 40 L50 45 L55 35" stroke="black" stroke-width="0.7" fill="none" stroke-linejoin="round" /></svg>'); }
-        
-        /* Level 4: Alt kısımlar ve ara bağlantılar (Yumurta artık tamamen ağ gibi sarıldı) */
-        #crack_4 { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20 80 L35 85 L30 95 M70 75 L85 80 L75 90 M50 60 L45 75 L55 90 M45 45 L35 55 M60 55 L70 65" stroke="black" stroke-width="0.7" fill="none" stroke-linejoin="round" /></svg>'); }
+        /* --- BEBEK MUTANT (LEVEL 5+) --- */
+        .bebek-mutant { width: 130px; height: 170px; background: radial-gradient(circle at 30% 30%, #00ffcc, #00897b); border-radius: 40% 40% 50% 50%; margin: 20px auto; position: relative; display: none; animation: nefes 2s infinite ease-in-out; cursor: pointer; }
+        @keyframes nefes { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-        .crystal-egg:active { transform: scale(0.92); }
-        h1 { font-size: 22px; text-shadow: 2px 2px #000; margin: 0; }
-        p { color: #b388ff; font-weight: bold; margin: 5px 0; }
-        .level-text { font-size: 14px; color: #fff; margin-bottom: 2px; }
+        /* --- LEVEL BAR VE DİĞERLERİ --- */
+        .level-bar-kapsayici { width: 100%; background: #2a0a4d; border-radius: 10px; margin: 15px 0; height: 12px; border: 1px solid #5e00ff; overflow: hidden; }
+        .level-bar-doluluk { width: 0%; height: 100%; background: linear-gradient(90deg, #ffb300, #ffdf00); transition: width 0.2s; }
+        .level-text { color: white; font-size: 14px; }
     </style>
 </head>
 <body>
+
     <div class="cave-container">
-        <h1 id="title_text">VIAC MUTANT CAVE</h1>
-        <p class="level-text">Level <span id="current_level">1</span></p>
-        <div class="progress-container"><div id="level_bar" class="progress-bar"></div></div>
-        <div class="crystal-egg" id="main_object" onclick="eggClicked()">
-            <div id="crack_2" class="crack-layer"></div>
-            <div id="crack_3" class="crack-layer"></div>
-            <div id="crack_4" class="crack-layer"></div>
+        <h1 id="ana_baslik">VIAC MUTANT CAVE</h1>
+        
+        <p class="level-text">Level <span id="seviye_no">1</span></p>
+
+        <div id="yumurta_kismi" onclick="tiklamaYapildi()">
+            <div class="yumurta">
+                <div id="c2" class="catlak" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><path d=%22M30 20 L35 25 L32 35 M70 15 L65 25 L75 35%22 stroke=%22black%22 stroke-width=%220.7%22 fill=%22none%22/></svg>')"></div>
+                <div id="c3" class="catlak" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><path d=%22M10 50 L25 55 L20 65 M85 45 L70 50%22 stroke=%22black%22 stroke-width=%220.7%22 fill=%22none%22/></svg>')"></div>
+                <div id="c4" class="catlak" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><path d=%22M50 60 L45 75 L55 90%22 stroke=%22black%22 stroke-width=%220.7%22 fill=%22none%22/></svg>')"></div>
+            </div>
         </div>
-        <p id="status">...</p>
-        <p><span id="balance_text">VIAC Particles</span>: <span id="balance">0</span></p>
+
+        <div id="mutant_kismi" onclick="tiklamaYapildi()" style="display: none;">
+            <div class="bebek-mutant">
+                </div>
+        </div>
+
+        <div class="level-bar-kapsayici"><div id="cubuk" class="level-bar-doluluk"></div></div>
+        
+        <p id="durum_yazisi">...</p>
+        <p><span id="birim_adi">VIAC Particles</span>: <span id="bakiye">0</span></p>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation();
 
-        let balance = 0; let level = 1; let progress = 0;
-        const nextLevelAt = 30;
+        let puan = 0, level = 1, ilerleme = 0;
 
-        const languages = {
-            'tr': { title: "VIAC MUTANT MAĞARASI", status: "Enerji Topla!", balance: "VIAC Parçacığı" },
-            'en': { title: "VIAC MUTANT CAVE", status: "Collect Energy!", balance: "VIAC Particles" },
-            'es': { title: "CUEVA MUTANTE VIAC", status: "Recoge Energía!", balance: "Partículas VIAC" },
-            'it': { title: "CAVERNA MUTANTE VIAC", status: "Raccogli Energia!", balance: "Particelle VIAC" },
-            'de': { title: "VIAC MUTANTENHÖHLE", status: "Energie Sammeln!", balance: "VIAC-Partikel" },
-            'fr': { title: "GROTTE MUTANTE VIAC", status: "Collecter l'Énergie!", balance: "Particules VIAC" },
-            'ru': { title: "VIAC МУТАНТНАЯ ПЕЩЕРА", status: "Собирай Энергию!", balance: "VIAC Частицы" },
-            'zh': { title: "VIAC 变异洞穴", status: "收集能量!", balance: "VIAC 粒子" },
-            'pt': { title: "CAVERNA MUTANTE VIAC", status: "Coletar Energia!", balance: "Partículas VIAC" }
+        // --- DİL LİSTESİ BURADA ---
+        const diller = {
+            'tr': { title: "VIAC MUTANT MAĞARASI", status: "Enerji Topla!", unit: "VIAC Parçacığı", born: "Doğdu!" },
+            'en': { title: "VIAC MUTANT CAVE", status: "Collect Energy!", unit: "VIAC Particles", born: "It's Born!" },
+            'es': { title: "CUEVA MUTANTE VIAC", status: "Recoge Energía!", unit: "Partículas VIAC", born: "¡Nacido!" },
+            'it': { title: "CAVERNA MUTANTE VIAC", status: "Raccogli Energia!", unit: "Particelle VIAC", born: "Nato!" },
+            'de': { title: "VIAC MUTANTENHÖHLE", status: "Energie Sammeln!", unit: "VIAC-Partikel", born: "Geboren!" },
+            'fr': { title: "GROTTE MUTANTE VIAC", status: "Collecter l'Énergie!", unit: "Particules VIAC", born: "Né!" },
+            'ru': { title: "VIAC МУТАНТНАЯ ПЕЩЕРА", status: "Собирай Энергию!", unit: "VIAC Частицы", born: "Родился!" },
+            'zh': { title: "VIAC 变异洞穴", status: "收集能量!", unit: "VIAC 粒子", born: "出生了！" },
+            'pt': { title: "CAVERNA MUTANTE VIAC", status: "Coletar Energia!", unit: "Partículas VIAC", born: "Nasceu!" }
         };
 
-        const userLangCode = tg.initDataUnsafe.user?.language_code || 'en';
-        const selectedLang = languages[userLangCode] ? userLangCode : 'en';
-        document.getElementById('title_text').innerText = languages[selectedLang].title;
-        document.getElementById('status').innerText = languages[selectedLang].status;
-        document.getElementById('balance_text').innerText = languages[selectedLang].balance;
+        // Kullanıcının dilini seç
+        const userLang = tg.initDataUnsafe.user?.language_code || 'en';
+        const secilenDil = diller[userLang] ? userLang : 'en';
 
-        function eggClicked() {
-            balance++; progress++;
-            document.getElementById('balance').innerText = balance;
-            document.getElementById('level_bar').style.width = (progress / nextLevelAt) * 100 + "%";
-            if (progress >= nextLevelAt) {
-                level++; progress = 0;
-                document.getElementById('current_level').innerText = level;
-                document.getElementById('level_bar').style.width = "0%";
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                updateEggVisuals();
-            } else { if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
+        // Sayfa açıldığında dilleri uygula
+        document.getElementById('ana_baslik').innerText = diller[secilenDil].title;
+        document.getElementById('durum_yazisi').innerText = diller[secilenDil].status;
+        document.getElementById('birim_adi').innerText = diller[secilenDil].unit;
+
+        function tiklamaYapildi() {
+            puan++; ilerleme++;
+            ekraniGuncelle();
+            if (ilerleme >= 30) { seviyeAtla(); }
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        function updateEggVisuals() {
-            if(level === 2) {
-                document.getElementById('main_object').style.background = "radial-gradient(circle at 30% 30%, #e6ee9c, #afb42b)";
-                document.getElementById('crack_2').style.opacity = "1";
-            } else if(level === 3) {
-                document.getElementById('main_object').style.background = "radial-gradient(circle at 30% 30%, #4db6ac, #00796b)";
-                document.getElementById('crack_3').style.opacity = "1";
-            } else if(level === 4) {
-                document.getElementById('main_object').style.background = "radial-gradient(circle at 30% 30%, #00897b, #004d40)";
-                document.getElementById('crack_4').style.opacity = "1";
-                // Level 4'te hepsi birleşince yumurta tamamen çatlak görünecek
-            } else if(level >= 5) {
-                document.getElementById('main_object').style.background = "radial-gradient(circle at 30% 30%, #00ffcc, #00897b)";
-                document.getElementById('main_object').style.borderRadius = "20% 50% 20% 50%";
-                document.querySelectorAll('.crack-layer').forEach(el => el.style.display = "none");
-                document.getElementById('status').innerText = "Something is coming...";
+        function seviyeAtla() {
+            level++; ilerleme = 0;
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+            if (level <= 4) {
+                if(level === 2) document.getElementById('c2').style.opacity = "1";
+                if(level === 3) document.getElementById('c3').style.opacity = "1";
+                if(level === 4) document.getElementById('c4').style.opacity = "1";
+            } 
+            else if (level === 5) {
+                // YUMURTAYI GİZLE, MUTANTI GÖSTER
+                document.getElementById('yumurta_kismi').style.display = "none";
+                document.getElementById('mutant_kismi').style.display = "block";
+                document.getElementById('durum_yazisi').innerText = diller[secilenDil].born;
             }
+            ekraniGuncelle();
+        }
+
+        function ekraniGuncelle() {
+            document.getElementById('bakiye').innerText = puan;
+            document.getElementById('seviye_no').innerText = level;
+            document.getElementById('cubuk').style.width = (ilerleme / 30) * 100 + "%";
         }
     </script>
 </body>
