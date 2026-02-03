@@ -2,19 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VIAC Mutant Cave</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background-color: #0b021a; color: #ffb300; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .cave-container { text-align: center; border: 2px solid #5e00ff; padding: 30px; border-radius: 50px; box-shadow: 0 0 20px #5e00ff; background: rgba(20, 0, 50, 0.8); width: 85%; max-width: 400px; }
+        /* Mavi parlamayı ve seçilmeyi her yerde engelle */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            outline: none;
+        }
+
+        body { 
+            background-color: #0b021a; 
+            color: #ffb300; 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            overflow: hidden; 
+        }
+
+        .cave-container { 
+            text-align: center; 
+            border: 2px solid #5e00ff; 
+            padding: 30px; 
+            border-radius: 50px; 
+            box-shadow: 0 0 20px #5e00ff, inset 0 0 10px #5e00ff; 
+            background: rgba(20, 0, 50, 0.8); 
+            width: 85%; 
+            max-width: 400px; 
+        }
         
-        /* Seviye Barı Tasarımı */
-        .progress-container { width: 100%; background: #2a0a4d; border-radius: 10px; margin: 15px 0; border: 1px solid #5e00ff; height: 12px; position: relative; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #ffb300, #ffdf00); transition: width 0.2s; box-shadow: 0 0 10px #ffb300; }
+        .progress-container { 
+            width: 100%; 
+            background: #2a0a4d; 
+            border-radius: 10px; 
+            margin: 15px 0; 
+            border: 1px solid #5e00ff; 
+            height: 12px; 
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        .progress-bar { 
+            width: 0%; 
+            height: 100%; 
+            background: linear-gradient(90deg, #ffb300, #ffdf00); 
+            transition: width 0.2s; 
+            box-shadow: 0 0 10px #ffb300; 
+        }
         
-        .crystal-egg { width: 150px; height: 200px; background: radial-gradient(circle at 30% 30%, #ffdf00, #ffb300, #966b00); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; margin: 20px auto; box-shadow: 0 0 30px #ffb300; cursor: pointer; transition: transform 0.1s; }
-        .crystal-egg:active { transform: scale(0.95); }
+        .crystal-egg { 
+            width: 150px; 
+            height: 200px; 
+            background: radial-gradient(circle at 30% 30%, #ffdf00, #ffb300, #966b00); 
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; 
+            margin: 20px auto; 
+            box-shadow: 0 0 30px #ffb300; 
+            cursor: pointer; 
+            transition: transform 0.05s; 
+            display: block;
+        }
+
+        /* Tıklandığında hafif küçülme efekti */
+        .crystal-egg:active { 
+            transform: scale(0.92); 
+        }
+
         h1 { font-size: 22px; text-shadow: 2px 2px #000; margin: 0; }
         p { color: #b388ff; font-weight: bold; margin: 5px 0; }
         .level-text { font-size: 14px; color: #fff; margin-bottom: 2px; }
@@ -30,7 +90,7 @@
             <div id="level_bar" class="progress-bar"></div>
         </div>
 
-        <div class="crystal-egg" onclick="eggClicked()"></div>
+        <div class="crystal-egg" id="main_object" onclick="eggClicked()"></div>
         
         <p id="status">...</p>
         <p><span id="balance_text">VIAC Particles</span>: <span id="balance">0</span></p>
@@ -39,14 +99,13 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation(); // Yanlışlıkla kapatmayı önler
 
-        // OYUN DEĞİŞKENLERİ
         let balance = 0;
         let level = 1;
         let progress = 0;
-        const nextLevelAt = 50; // Her 50 tıkta bir seviye atlar (Test için düşük tuttum)
+        const nextLevelAt = 50; 
 
-        // DİL SÖZLÜĞÜ
         const languages = {
             'tr': { title: "VIAC MUTANT MAĞARASI", status: "Enerji Topla!", balance: "VIAC Parçacığı" },
             'en': { title: "VIAC MUTANT CAVE", status: "Collect Energy!", balance: "VIAC Particles" },
@@ -62,36 +121,34 @@
         const userLangCode = tg.initDataUnsafe.user?.language_code || 'en';
         const selectedLang = languages[userLangCode] ? userLangCode : 'en';
 
-        // İlk metin yerleşimi
         document.getElementById('title_text').innerText = languages[selectedLang].title;
         document.getElementById('status').innerText = languages[selectedLang].status;
         document.getElementById('balance_text').innerText = languages[selectedLang].balance;
 
-        // TIKLAMA FONKSİYONU
         function eggClicked() {
             balance++;
             progress++;
             
-            // Verileri Güncelle
             document.getElementById('balance').innerText = balance;
             
-            // Barı Güncelle
             let barWidth = (progress / nextLevelAt) * 100;
             document.getElementById('level_bar').style.width = barWidth + "%";
 
-            // Seviye Atlama Kontrolü
             if (progress >= nextLevelAt) {
                 level++;
                 progress = 0;
                 document.getElementById('current_level').innerText = level;
                 document.getElementById('level_bar').style.width = "0%";
                 
-                // Başarı Bildirimi (Titreşim)
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 
-                // Buraya ileride seviye atlayınca yaratık değiştirme kodu gelecek
+                // LEVEL 2 OLUNCA RENK DEĞİŞSİN (Test amaçlı)
+                if(level === 2) {
+                    document.getElementById('main_object').style.background = "radial-gradient(circle at 30% 30%, #00ffcc, #00897b, #004d40)";
+                    document.getElementById('main_object').style.boxShadow = "0 0 30px #00ffcc";
+                }
             } else {
-                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             }
         }
     </script>
