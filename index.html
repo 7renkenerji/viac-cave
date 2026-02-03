@@ -6,7 +6,6 @@
     <title>VIAC Mutant Cave</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Mavi parlamayı ve seçilmeyi her yerde engelle */
         * {
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
@@ -66,11 +65,23 @@
             margin: 20px auto; 
             box-shadow: 0 0 30px #ffb300; 
             cursor: pointer; 
-            transition: transform 0.05s; 
+            transition: all 0.3s ease; 
             display: block;
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Tıklandığında hafif küçülme efekti */
+        /* Çatlak Efekti Katmanı */
+        .crack-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M10 30 L30 40 L20 60 M60 10 L70 40 L90 30 M40 70 L60 90 L80 70" stroke="black" stroke-width="2.5" fill="none" opacity="0.7"/></svg>');
+            background-size: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
         .crystal-egg:active { 
             transform: scale(0.92); 
         }
@@ -90,7 +101,9 @@
             <div id="level_bar" class="progress-bar"></div>
         </div>
 
-        <div class="crystal-egg" id="main_object" onclick="eggClicked()"></div>
+        <div class="crystal-egg" id="main_object" onclick="eggClicked()">
+            <div id="cracks" class="crack-overlay"></div>
+        </div>
         
         <p id="status">...</p>
         <p><span id="balance_text">VIAC Particles</span>: <span id="balance">0</span></p>
@@ -99,12 +112,12 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation(); // Yanlışlıkla kapatmayı önler
+        tg.enableClosingConfirmation();
 
         let balance = 0;
         let level = 1;
         let progress = 0;
-        const nextLevelAt = 50; 
+        const nextLevelAt = 20; // Her seviye için 20 tık
 
         const languages = {
             'tr': { title: "VIAC MUTANT MAĞARASI", status: "Enerji Topla!", balance: "VIAC Parçacığı" },
@@ -130,9 +143,7 @@
             progress++;
             
             document.getElementById('balance').innerText = balance;
-            
-            let barWidth = (progress / nextLevelAt) * 100;
-            document.getElementById('level_bar').style.width = barWidth + "%";
+            document.getElementById('level_bar').style.width = (progress / nextLevelAt) * 100 + "%";
 
             if (progress >= nextLevelAt) {
                 level++;
@@ -142,13 +153,40 @@
                 
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 
-                // LEVEL 2 OLUNCA RENK DEĞİŞSİN (Test amaçlı)
-                if(level === 2) {
-                    document.getElementById('main_object').style.background = "radial-gradient(circle at 30% 30%, #00ffcc, #00897b, #004d40)";
-                    document.getElementById('main_object').style.boxShadow = "0 0 30px #00ffcc";
-                }
+                updateEggVisuals();
             } else {
                 if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        function updateEggVisuals() {
+            const egg = document.getElementById('main_object');
+            const crackLayer = document.getElementById('cracks');
+
+            // LEVEL 2: İlk Renk Değişimi ve Hafif Çatlak
+            if(level === 2) {
+                egg.style.background = "radial-gradient(circle at 30% 30%, #e6ee9c, #afb42b)";
+                egg.style.boxShadow = "0 0 30px #e6ee9c";
+                crackLayer.style.opacity = "0.4";
+            }
+            // LEVEL 3: Turkuaza Geçiş ve Daha Belirgin Çatlak
+            else if(level === 3) {
+                egg.style.background = "radial-gradient(circle at 30% 30%, #4db6ac, #00796b)";
+                egg.style.boxShadow = "0 0 30px #4db6ac";
+                crackLayer.style.opacity = "0.7";
+            }
+            // LEVEL 4: Koyu Mavi/Yeşil ve Maksimum Çatlak
+            else if(level === 4) {
+                egg.style.background = "radial-gradient(circle at 30% 30%, #00897b, #004d40)";
+                crackLayer.style.opacity = "1";
+                crackLayer.style.filter = "contrast(2)";
+            }
+            // LEVEL 5: KIRILMA - Farklı Bir Form (Örn: Elmas)
+            else if(level >= 5) {
+                egg.style.background = "radial-gradient(circle at 30% 30%, #00ffcc, #00897b)";
+                egg.style.borderRadius = "20% 20% 50% 50%"; // Şekil değişimi başlangıcı
+                crackLayer.style.display = "none";
+                document.getElementById('status').innerText = "Something is coming...";
             }
         }
     </script>
